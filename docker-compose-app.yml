@@ -30,6 +30,8 @@ services:
       - db_nw
 
   flask:
+    stdin_open: true
+    tty: true
     image: passcultureapp/api-flask:latest
     working_dir: /opt/services/flaskapp/src
     container_name: pc-flask
