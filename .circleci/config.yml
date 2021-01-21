@@ -687,3 +687,12 @@ workflows:
                 - master
     jobs:
       - deploy-sandbox-in-testing
+
+  sandbox:
+    jobs:
+      - deploy-sandbox-in-testing:
+          filters:
+            branches:
+              only:
+              - PC-6415-add-an-exit-code-when-an-exception-is-triggered-on-sandbox
+
