@@ -7,6 +7,6 @@ else
     deployed_version=v$(curl -Ls "$APP_URL/version.txt")
 fi
 
-version_to_deploy=$(git describe --contains)
+version_to_deploy="v123.0.7"
 
 [ "$deployed_version" == "$version_to_deploy" ] && exit 0 || exit 1
