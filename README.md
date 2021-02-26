@@ -2,6 +2,10 @@
 
 C'est tout le framework du Pass Culture!
 
+# [VERSION PIRATE]
+
+Pour bypass la CI et mettre à jour les front netlify, rebase sur production et mettre à jour le fichier .circleci/version.pirate pour actualiser la version en réutilisant le tag de production.
+
 ## Minimal Process
 
 ### Install
