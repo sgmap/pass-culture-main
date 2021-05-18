@@ -100,6 +100,9 @@ if [ "$IMPORT_DATA" = "true" ];then
         --quiet
     echo "Ended: gcloud sql import $(echo_time)"
 
+    # Sleeping to prevent a race condition where the operation hasn't started yet
+    sleep 5
+
     # Check is an operation is still running on the instance before continuing
     echo "Starting: gcloud sql operations list $(echo_time)"
     while [[ $(import_running_output) != "" ]];do
