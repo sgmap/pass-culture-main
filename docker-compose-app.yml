@@ -17,8 +17,6 @@ services:
   postgres-test:
     image: circleci/postgres:12.3-postgis
     container_name: pc-postgres-pytest
-    volumes:
-      - postgres_data_test:/var/lib/postgresql-test/data
     environment:
       - POSTGRES_DB=pass_culture
       - POSTGRES_USER=pytest
@@ -86,5 +84,4 @@ networks:
 
 volumes:
   postgres_data:
-  postgres_data_test:
   redis_data:
