@@ -74,7 +74,7 @@ Les actions suivantes sont requises afin de faire fonctionner l'IDE correctement
 - `python3 -m venv venv`
 - `source venv/bin/activate`
 - `pip install -r requirements.txt`
-Troubleshooting:
+  Troubleshooting:
 
 if you got errors, during requirements installation, about psycopg, this may help you: https://stackoverflow.com/questions/9678408/cant-install-psycopg2-with-pip-in-virtualenv-on-mac-os-x-10-7/62931654#62931654
 
@@ -239,67 +239,24 @@ Le mot de passe est toujours : `user@AZERTY123`
 
 (Ces deux utilisateurs existent également pour le 97, pour les utiliser, il suffit de remplacer 93 par 97)
 
-## Tagging des versions
-
-La politique de tagging de version est la suivante :
-
-- On n'utilise pas de _semantic versioning_
-- On utilise le format `I.P.S`
-  - I => incrément d'**Itération**
-  - P => incrément de _fix_ en **Production**
-  - S => incrément de _fix_ en **Staging**
-- Lors de la pose d'un tag, il faut communiquer les migrations de BDD embarquées à la data pour éviter des bugs sur les analytics
-
-### Exemple
-
-- Je livre une nouvelle version en staging en fin d'itération n°20 => `20.0.0`
-- Je m'aperçois qu'il y a un bug en staging => `20.0.1`
-- Le bug est corrigé, je livre en production => `20.0.1`
-- On détecte un bug en production, je livre en staging => `20.1.0`
-- Tout se passe bien en staging, je livre en production => `20.1.0`
-- On détecte un autre bug en production, je livre en staging => `20.2.0`
-- Je m'aperçois que mon fix est lui-même buggé, je relivre un fix en staging => `20.2.1`
-- Mes deux fix sont cette fois OK, je livre en production => `20.2.1`
-
-Pour poser un tag sur une version :
-
-S'assurer d'avoir bien commité ses fichiers.
-Checkout de master sur pass-culture-main, pass-culture-api, pass-culture-webapp et pass-culture-pro.
-
-```bash
-pc -t I.P.S tag
-```
-
-La seule branche devant être taguée de cette façon est master. Pour les hotfixes, voir plus bas.
-
-Le fichier version.txt de l'API est mis à jours ainsi que le package.json de Webapp et Pro.
-Le tag est posé sur les branches locales checkout (de préférence master): Api, Webapp et Pro.
-Elles sont ensuite poussées sur le repository distant.
-Les tests sont enfin joués et on déploie sur Testing.
-
-## Hotfixes
-
-Une fois le commit sur master, déployé en testing et validé par les POs,
-pour tagguer les hotfixes, commencer par se placer sur la dernière version déployée
-en production ou en staging à l'aide d'un `git checkout vI.P.S` sur chacun de projets.
-En effet nous voulons déployer uniquement ce qui est en Prod + nos commits de hotfix.
-
-Une fois le tag checked-out, cherry-pick le fix du bug puis lancer la commande de création de branches de hotfixes et de tag pour chacun des projets :
-
-`pc -t I.P(+1).S(+1) tag-hotfix`.
-
-Une fois les tests de la CI passés, on peut déployer ce tag.
-Il faut aussi penser à supprimer les branches de hotfixs une fois le déploiement.
-
-## Deploy
+## Deploiement en staging et production
 
 Pré-requis : installer [jq](https://stedolan.github.io/jq/download/)
 
-En premier lieu:
+Le déploiement en staging et production suit les étapes suivantes :
 
-- bien vérifier qu'on a, en local, **main** et tous les submodules **(api, pro, webapp)** à jour par rapport à **master**
-- de là on peut poser un tag `pc -t I.P.S. tag` (pour savoir le tag précédent, il suffit de faire un `git tag` dans pass-culture-main)
-- se rendre sur CircleCI pour vérifier qu'il y a un job lancé par submodule **(api, pro, webapp)**, ainsi que **main** qui a également lancé autant de jobs qu'il y a de submodules,
+1.  [Tagging de la version](#tagging-des-versions)
+2.  Déploiement du tag en `staging`
+3.  Tests de la version déployée en `staging`
+4.  Déploiement du tag en `production`
+5.  Déploiement du tag en `integration`
+
+Les 3 repos suivants sont taggés et déployés simultanément :
+
+- `api`
+- `pro`
+- `webapp`
+
 - réaliser le déploiement lorsque les tests de chaque submodule sont bien **verts**
 
 Pour déployer une nouvelle version, par exemple en staging:
@@ -313,12 +270,82 @@ Par exemple pour déployer la version 3.0.1 en integration :
 
 ```bash
 pc -e integration -t 3.0.1 deploy
-
 ```
 
 A la fin de l'opération, une fenêtre de votre navigateur s'ouvrira sur le workflow en cours.
 
 Après avoir livré en production, ne pas oublier de livrer ensuite sur les environnements d'integration.
+
+### Tagging des versions
+
+"Poser un tag" consiste à figer un ensemble de commits et de leur attribuer un numéro de version.
+
+1. Se placer sur les 4 repos et checkout la branche voulue
+
+- repo main : `git checkout master && git pull`
+- repo api : `git chekout master && git pull`
+- repo pro : `git chekout master && git pull`
+- repo webapp : `git chekout master && git pull`
+
+La seule branche devant être taguée de cette façon est master. Pour les hotfixes, [voir plus bas](#hot-fixes).
+
+2. Lancer la commande
+
+```bash
+pc -t I.P.S tag
+```
+
+3. Sur CircleCI, vérifier l'avancement du job sur `main`.
+
+### Numéro de version
+
+Pour déterminer le numéro de version du tag
+
+- On n'utilise pas de _semantic versioning_
+- On utilise le format `I.P.S`
+  - I => numéro de l'**Itération**
+  - P => incrément de _fix_ en **Production**
+  - S => incrément de _fix_ en **Staging**
+- Lors de la pose d'un tag, il faut communiquer les migrations de BDD embarquées à la data pour éviter des bugs sur les analytics
+
+#### Exemple
+
+- Je livre une nouvelle version en staging en fin d'itération n°20 => `20.0.0`
+- Je m'aperçois qu'il y a un bug en staging => `20.0.1`
+- Le bug est corrigé, je livre en production => `20.0.1`
+- On détecte un bug en production, je livre en staging => `20.1.0`
+- Tout se passe bien en staging, je livre en production => `20.1.0`
+- On détecte un autre bug en production, je livre en staging => `20.2.0`
+- Je m'aperçois que mon fix est lui-même buggé, je relivre un fix en staging => `20.2.1`
+- Mes deux fix sont cette fois OK, je livre en production => `20.2.1`
+
+Le fichier version.txt de l'API est mis à jours ainsi que le package.json de Webapp et Pro.
+Le tag est posé sur les branches locales checkout (de préférence master): Api, Webapp et Pro.
+Elles sont ensuite poussées sur le repository distant.
+Les tests sont enfin joués et on déploie sur Testing.
+
+### Hot fixes
+
+Faire un hotfix consiste à créer un nouveau tag à partir du tag précédents avec des commits spécifiques.
+
+1. Les commits sont poussés sur `master`, déployés sur testing et validés par les POs
+2. Se placer en local sur le dernier tag
+
+- repo main : `git checkout vI.P.S`
+- repo api : `git chekout vI.P.S`
+- repo pro : `git chekout vI.P.S`
+- repo webapp : `git chekout vI.P.S`
+
+3. Cherry-pick les commits voulus
+
+4. Lancer la commande de création de tag hot fix :
+
+```bash
+pc -t I.P(+1).S(+1) tag-hotfix
+```
+
+Une fois les tests de la CI passés, on peut déployer ce tag.
+Il faut aussi penser à supprimer les branches de hotfixs une fois le déploiement passé.
 
 ## Administration
 
